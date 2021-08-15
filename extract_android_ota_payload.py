@@ -103,7 +103,7 @@ def parse_payload(payload_f, partition, out_f):
 
 def main(filename, output_dir):
   if filename.endswith('.zip'):
-    print("Extracting 'payload.bin' from OTA file...")
+    print("-> Extracting 'payload.bin' from OTA file...")
     ota_zf = zipfile.ZipFile(filename)
     payload_file = open(ota_zf.extract('payload.bin', output_dir), 'rb')
   else:
@@ -114,13 +114,12 @@ def main(filename, output_dir):
 
   for p in payload.manifest.partitions:
     name = p.partition_name + '.img'
-    print("Extracting '%s'" % name)
     fname = os.path.join(output_dir, name)
     out_f = open(fname, 'wb')
     try:
       parse_payload(payload, p, out_f)
     except PayloadError as e:
-      print('Failed: %s' % e)
+      print('-> Failed: %s' % e)
       out_f.close()
       os.unlink(fname)
 
