@@ -32,7 +32,7 @@ class Payload(object):
     def ReadFromPayload(self, payload_file):
       magic = payload_file.read(4)
       if magic != self._MAGIC:
-        raise PayloadError('Invalid payload magic: %s' % magic)
+        raise PayloadError(f'Invalid payload magic: {magic}')
       self.version = struct.unpack('>Q', payload_file.read(8))[0]
       self.manifest_len = struct.unpack('>Q', payload_file.read(8))[0]
       self.size = 20
@@ -67,8 +67,7 @@ class Payload(object):
     manifest_raw = self._ReadManifest()
     self.manifest = update_metadata_pb2.DeltaArchiveManifest()
     self.manifest.ParseFromString(manifest_raw)
-    metadata_signature_raw = self._ReadMetadataSignature()
-    if metadata_signature_raw:
+    if metadata_signature_raw := self._ReadMetadataSignature():
       self.metadata_signature = update_metadata_pb2.Signatures()
       self.metadata_signature.ParseFromString(metadata_signature_raw)
     self.metadata_size = self.header.size + self.header.manifest_len
@@ -98,8 +97,9 @@ def parse_payload(payload_f, partition, out_f):
       r = decompress_payload('bzcat', data, e.num_blocks * BLOCK_SIZE, operation.data_sha256_hash)
       out_f.write(r)
     else:
-      raise PayloadError('Unhandled operation type ({} - {})'.format(operation.type,
-                         update_metadata_pb2.InstallOperation.Type.Name(operation.type)))
+      raise PayloadError(
+          f'Unhandled operation type ({operation.type} - {update_metadata_pb2.InstallOperation.Type.Name(operation.type)})'
+      )
 
 def main(filename, output_dir):
   if filename.endswith('.zip'):
@@ -113,13 +113,13 @@ def main(filename, output_dir):
   payload.Init()
 
   for p in payload.manifest.partitions:
-    name = p.partition_name + '.img'
+    name = f'{p.partition_name}.img'
     fname = os.path.join(output_dir, name)
     out_f = open(fname, 'wb')
     try:
       parse_payload(payload, p, out_f)
     except PayloadError as e:
-      print('-> Failed: %s' % e)
+      print(f'-> Failed: {e}')
       out_f.close()
       os.unlink(fname)
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
   try:
     filename = sys.argv[1]
   except:
-    print('Usage: %s payload.bin [output_dir]' % sys.argv[0])
+    print(f'Usage: {sys.argv[0]} payload.bin [output_dir]')
     sys.exit()
 
   try:
